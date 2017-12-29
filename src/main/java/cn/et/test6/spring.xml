@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-4.2.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+    <!-- 注解扫描 -->
+	<context:component-scan base-package="cn.et.test5.bank">
+	</context:component-scan>
+	<context:property-placeholder location="classpath:cn/et/jdbc.properties"/>
+	<!-- 两种配置连接的方式
+    一：在xml配置文件中配置 -->
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+  	<!-- 数据源只是为了获取连接 -->
+    <property name="url" value="${url}"></property>
+    <!-- username是一个关键字，使用bean定义配置文件的位置时会优先读取配置文件中的键值对，使用context定义会优先使用系统管理员帐号(administrator) -->
+    <property name="username" value="${username1}"></property>
+    <property name="password" value="${password}"></property>
+    <property name="driverClassName" value="${driverClassName}"></property>
+  </bean>
+  <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+    <property name="dataSource" ref="dataSource"></property>
+  </bean>
+  <!--	封装一些操作的方法，直接连接数据库  用来增删改查
+  <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+    <property name="dataSource" ref="dataSource"></property>
+  </bean> 
+    二：自己写配置类 （MyConfig）
+  -->
+  
+  <!-- 事务管理器   不再使用jdbc的commit和rollback  必须使用事务管理器提供 -->
+  <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <property name="dataSource" ref="dataSource"></property>
+  </bean>
+  <!-- 定义事务通知    通知的代码（前置通知）spring已经实现   -->
+  <tx:advice id = "myAdvice" transaction-manager="transactionManager">
+    <tx:attributes>
+      <!-- propagation="" 事务的传播  方法与方法之间必须存在父子关系
+           REQUIRED  没有事务就创建一个事务，有事务就使用当前事务
+           REQUIRES_NEW  不管父方法存不存在事务，都会新建一个事务
+           SUPPORTS  父方法存在事务就使用当前事务，没有事务就使用jdbc的事务（自动提交）
+           NOT_SUPPORTED  不管父方法存不存在事务，都不会使用事务（挂起事务，不受父方法事务影响）
+           MANDATORY  必须在事务的环境下运行，如果父方法没有事务就抛出异常
+             no existing transaction found for transaction marked with propagation 'mandatory'
+           NEVER  父方法不能存在事务，如果父方法有事务就抛出异常 
+             no existing transaction found for transaction marked with propagation 'mandatory'
+             
+           isolation="" 设置spring的事务隔离级别
+           DEFAULT  使用数据库的默认隔离级别   oracle（读已提交）  mysql（可重复读）
+           READ_COMMITTED  读已提交  （脏读）
+           REPEATABLE_READ  可重复读  （不可重复读， 脏读）
+           SERIALIZABLE  串行化  （幻读，不可重复读， 脏读）
+           
+                                 设置spring事务的回滚 与不回滚  （运行时异常默认自动回滚，检查异常默认不回滚）
+           rollback-for="" 设置检查异常为自动回滚
+           no-rollback-for=""  设置某个自动回滚的异常为不回滚
+           
+           timeout="" 设置客户端请求超时取消语句时间（单位为秒）
+           mysql默认10s自动超时    oracle默认永不超时（-1） -->
+      <!-- 设置拦截的方法 -->
+      <tx:method name="update*" propagation="REQUIRED" isolation="DEFAULT" no-rollback-for="" timeout="5"/>
+      <tx:method name="save*" propagation="NEVER"/>
+      <tx:method name="delete*"/>
+      <tx:method name="*" read-only="true"/> <!-- 表示只读   不拦截  -->
+    </tx:attributes>
+  </tx:advice>
+  <!-- aop配置 -->
+	  <!-- 定义切点 
+	      expression(权限 返回类型  (*表示所有)  要拦截的方法(包名.类名.方法名)(参数..表示任何参数))
+	  -->
+	<aop:config>
+	  <aop:pointcut expression="execution(* cn.et.test5.bank.*.MyAccountDao.*(..))" id="myPointCut"/>
+	  <!-- 导入通知 -->
+	  <aop:advisor advice-ref="myAdvice" pointcut-ref="myPointCut"/>
+	  <!-- 定义通知     常用的通知  前置通知(before) ，后置通知..，异常通知..，环绕通知..
+	  <aop:aspect>
+	    <aop:before method=""/>
+	  </aop:aspect> -->
+	</aop:config>
+</beans>

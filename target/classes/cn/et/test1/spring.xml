@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
+  <!-- 如果没有指定id的类  默认名字是  类名#编号    ‘从0开始’ -->
+  <!-- 属性注入 -->
+  <bean id="a" class="cn.et.test1.A">           <!-- A a = new A(); -->
+    <property name="name" value="张三"></property>  <!-- a.setName(张三);  value:普通属性依赖（基本数据类型） -->
+  </bean>
+  <!-- autowire 自动装配    将当前实例中所有的对象属性   全部进行填充
+       byType 根据对象属性的类型进行查找对应的实例     (只适合在容器中只有一个实例的类型)
+       byName 根据对象属性的名字进行查找对应的实例   
+       scope 设置bean的实例化个数  默认为单实例
+       singleton 单实例   容器初始化时实例化
+       prototype 多实例   调用getBean方法时实例化
+       -->
+  <bean id="b" class="cn.et.test1.B" autowire="byName" scope="prototype"></bean>
+  
+  <!-- 构造器注入 -->
+  <bean id="c" class="cn.et.test1.C">
+  <!-- 可以使用 下标(index) 或 类型(java.lang.String) 或 属性名进行赋值 -->
+    <constructor-arg index="0" value="1"></constructor-arg>
+    <constructor-arg index="1" value="李四"></constructor-arg>
+    <constructor-arg index="2" ref="b"></constructor-arg>
+  </bean>
+</beans>

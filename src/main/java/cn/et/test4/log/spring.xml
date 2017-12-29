@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-4.2.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-4.2.xsd">
+    <!-- 注解扫描 -->
+	<context:component-scan base-package="cn.et.test4.log">
+	</context:component-scan>
+	<context:property-placeholder location="classpath:cn/et/jdbc.properties"/>
+    <!-- aop配置 -->
+	<aop:config>
+	  <!-- 定义切点 
+	      expression(权限 返回类型  (*表示所有)  要拦截的方法(包名.类名.方法名)(参数..表示任何参数))
+	      常用的通知  前置通知 ，后置通知，异常通知，环绕通知	  
+	  -->
+	  <aop:pointcut expression="execution(* cn.et.test4.log.User.*(..)) or execution(* cn.et.test4.log.Admin.*(..))" id="myPointCut"/>
+	  <aop:aspect ref="myMessage">
+	    <aop:before method="beforeInform" pointcut-ref="myPointCut"/>
+	  </aop:aspect>
+	</aop:config>
+</beans>
